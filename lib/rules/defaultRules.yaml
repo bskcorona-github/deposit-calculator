@@ -1,0 +1,63 @@
+meta:
+  version: 1
+  locale: JP
+  notes: |
+    国交省ガイドラインの原則を簡略化した初期ルール。実務判断の参考用。
+    特約の有効性（明確・合理・説明）フラグが立つ場合に限り強化規定を適用。
+
+rules:
+  - id: cleaning-basic
+    label: 退去時クリーニング
+    match: ["クリーニング", "清掃", "ハウスクリーニング"]
+    default_allocation: landlord
+    override_if:
+      - when: special_clause_valid
+        then: tenant_fixed_amount
+
+  - id: wallpaper
+    label: 壁紙（クロス）
+    match: ["クロス", "壁紙", "ビニールクロス"]
+    default_allocation: landlord
+    tenant_if: ["喫煙", "落書き", "ペット臭", "著しい汚損"]
+    override_if:
+      - when: special_clause_valid
+        then: tenant_fixed_amount
+    depreciation:
+      useful_life_years: 6
+      method: straight_line
+
+  - id: flooring
+    label: 床（フローリング/CF/畳）
+    match: ["フローリング", "床", "CF", "畳", "カーペット"]
+    default_allocation: landlord
+    tenant_if: ["水濡れ", "焦げ", "引っかき傷", "引きずり傷", "擦り傷", "凹み傷", "破損", "重過失", "家具移動"]
+    override_if:
+      - when: special_clause_valid
+        then: tenant_fixed_amount
+    depreciation:
+      useful_life_years: 6
+      method: straight_line
+
+  - id: equipment
+    label: 設備（交換/修理）
+    match: ["エアコン", "給湯器", "設備", "照明", "換気扇"]
+    default_allocation: landlord
+    tenant_if: ["過失破損", "故障誘発"]
+    override_if:
+      - when: special_clause_valid
+        then: tenant_fixed_amount
+    depreciation:
+      useful_life_years: 6
+      method: straight_line
+
+  - id: key-change
+    label: 鍵交換
+    match: ["鍵", "シリンダー", "鍵交換"]
+    default_allocation: landlord
+    override_if:
+      - when: special_clause_valid
+        then: tenant_reasonable_range
+
+pricing_guidance:
+  cleaning_flat_cap: 35000  # クリーニング一律負担の上限目安（円）
+  key_change_cap: 20000     # 鍵交換費用の上限目安（円）
