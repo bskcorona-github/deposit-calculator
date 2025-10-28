@@ -30,7 +30,7 @@ rules:
     label: 床（フローリング/CF/畳）
     match: ["フローリング", "床", "CF", "畳", "カーペット"]
     default_allocation: landlord
-    tenant_if: ["水濡れ", "焦げ", "引っかき傷", "引きずり傷", "擦り傷", "凹み傷", "破損", "重過失", "家具移動"]
+    tenant_if: ["水濬れ", "焦げ", "引っかき傷", "引きずり傷", "擦り傷", "凹み傷", "破損", "重過失", "家具移動"]
     override_if:
       - when: special_clause_valid
         then: tenant_fixed_amount
@@ -38,9 +38,59 @@ rules:
       useful_life_years: 6
       method: straight_line
 
-  - id: equipment
-    label: 設備（交換/修理）
-    match: ["エアコン", "給湯器", "設備", "照明", "換気扇"]
+  # 設備は種類別に耐用年数が異なる（国交省ガイドライン準拠）
+  
+  - id: equipment-aircon
+    label: エアコン
+    match: ["エアコン", "空調", "クーラー"]
+    default_allocation: landlord
+    tenant_if: ["過失破損", "故障誘発", "フィルター清掃怠慢"]
+    override_if:
+      - when: special_clause_valid
+        then: tenant_fixed_amount
+    depreciation:
+      useful_life_years: 6
+      method: straight_line
+
+  - id: equipment-water-heater
+    label: 給湯器
+    match: ["給湯器", "湯沸かし器", "給湯"]
+    default_allocation: landlord
+    tenant_if: ["過失破損", "故障誘発"]
+    override_if:
+      - when: special_clause_valid
+        then: tenant_fixed_amount
+    depreciation:
+      useful_life_years: 10
+      method: straight_line
+  
+  - id: equipment-intercom
+    label: インターホン
+    match: ["インターホン", "ドアホン", "呼び出し"]
+    default_allocation: landlord
+    tenant_if: ["過失破損", "故障誘発"]
+    override_if:
+      - when: special_clause_valid
+        then: tenant_fixed_amount
+    depreciation:
+      useful_life_years: 8
+      method: straight_line
+  
+  - id: equipment-fire-alarm
+    label: 火災報知器
+    match: ["火災報知器", "煙探知機", "報知器"]
+    default_allocation: landlord
+    tenant_if: ["過失破損", "故障誘発"]
+    override_if:
+      - when: special_clause_valid
+        then: tenant_fixed_amount
+    depreciation:
+      useful_life_years: 8
+      method: straight_line
+  
+  - id: equipment-other
+    label: その他設備
+    match: ["設備", "照明", "換気扇", "ドアノブ", "網戸"]
     default_allocation: landlord
     tenant_if: ["過失破損", "故障誘発"]
     override_if:
