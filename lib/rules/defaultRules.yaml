@@ -100,6 +100,18 @@ rules:
       useful_life_years: 6
       method: straight_line
 
+  - id: fusuma-shoji
+    label: 襖・障子
+    match: ["襖", "ふすま", "障子", "しょうじ", "襖紙", "障子紙"]
+    default_allocation: landlord
+    tenant_if: ["破損", "破れ", "穴", "落書き", "著しい汚損", "破壊"]
+    override_if:
+      - when: special_clause_valid
+        then: tenant_fixed_amount
+    depreciation:
+      useful_life_years: 4
+      method: straight_line
+
   - id: key-change
     label: 鍵交換
     match: ["鍵", "シリンダー", "鍵交換"]
