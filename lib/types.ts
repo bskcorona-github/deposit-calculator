@@ -37,6 +37,7 @@ export interface LeaseParseResult {
 export interface AllocationContext {
   tenancy_years: number; // 入居年数
   building_age?: number; // 建物築年数（契約書から自動抽出または手動入力）
+  notes?: string; // その他の特記事項
   // has_smoking, has_pet は見積書の備考から自動判定するため削除
 }
 
@@ -143,4 +144,5 @@ export const AllocationResultSchema = z.object({
 export const TenancyContextSchema = z.object({
   tenancy_years: z.number().min(0, '入居年数は0以上である必要があります'),
   building_age: z.number().min(0, '築年数は0以上である必要があります').optional(),
+  notes: z.string().optional(),
 });
