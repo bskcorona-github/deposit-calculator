@@ -1,5 +1,5 @@
 import { type ClassValue, clsx } from 'clsx';
-import { twMerge } from 'tailwind-wind-merge';
+import { twMerge } from 'tailwind-merge';
 
 /**
  * Tailwind CSSクラスを条件付きで結合

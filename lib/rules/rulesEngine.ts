@@ -13,6 +13,8 @@ import type {
 } from '../types';
 import { applyDepreciation, getDepreciationExplanation } from './depreciation';
 import { adjustForBuildingAge, getBuildingAgeAdjustmentExplanation } from './buildingAgeAdjustment';
+import { generateAuditTrace } from './auditTraceGenerator';
+import { checkPriceReasonableness, generatePriceWarning } from './priceChecker';
 
 /**
  * YAMLルールファイルを読み込み
@@ -461,6 +463,13 @@ export function allocateExpenses(
   const warnings: string[] = [];
   
   for (const line of estimate.lines) {
+    // 価格の妥当性チェック
+    const priceCheck = checkPriceReasonableness(line, rulesConfig);
+    const priceWarning = generatePriceWarning(priceCheck);
+    if (priceWarning) {
+      warnings.push(priceWarning);
+    }
+    
     // マッチするルールを検索
     const matchedRule = rulesConfig.rules.find((rule) =>
       matchesRule(`${line.category} ${line.description}`, rule.match)
@@ -607,9 +616,10 @@ export function allocateExpenses(
     
     // 【Step 1】混在ケース（経年劣化+借主過失）の按分処理を先に実行
     let baseAmountForDepreciation = line.subtotal;
+    let mixedResult: ReturnType<typeof applyMixedDamageAllocation> = null;
     
     if (allocation === 'tenant') {
-      const mixedResult = applyMixedDamageAllocation(
+      mixedResult = applyMixedDamageAllocation(
         { description: line.description, notes: line.notes },
         line.subtotal
       );
@@ -671,6 +681,7 @@ export function allocateExpenses(
     }
     
     // 建物築年数による調整（借主負担の場合のみ）
+    let originalTenantShareBeforeBuildingAge = tenantShare;
     if (allocation === 'tenant' && tenantShare > 0 && context.building_age) {
       const originalTenantShare = tenantShare;
       tenantShare = adjustForBuildingAge(tenantShare, context.building_age);
@@ -707,6 +718,24 @@ export function allocateExpenses(
       tenantPercentage,
     });
     
+    // 監査トレースを生成
+    const auditTrace = generateAuditTrace({
+      line,
+      matchedRule,
+      allocation,
+      tenantShare,
+      landlordShare,
+      basis,
+      context,
+      hasSpecialClause,
+      hasDepreciation: allocation === 'tenant' && shouldApplyDepreciation && !!matchedRule.depreciation,
+      hasMixedDamage: !!mixedResult,
+      buildingAgeAdjustment:
+        context.building_age && originalTenantShareBeforeBuildingAge !== tenantShare
+          ? { original: originalTenantShareBeforeBuildingAge, adjusted: tenantShare }
+          : undefined,
+    });
+    
       allocatedLines.push({
         item: line.description,
         location: line.location,
@@ -720,6 +749,7 @@ export function allocateExpenses(
         basis,
         explanation,
         notes: line.notes,
+        audit_trace: auditTrace,
       });
   }
   
@@ -733,5 +763,10 @@ export function allocateExpenses(
     lines: allocatedLines,
     totals,
     warnings,
+    meta: {
+      rules_version: rulesConfig.meta.version,
+      calculation_date: new Date().toISOString(),
+      guideline_reference: '原状回復をめぐるトラブルとガイドライン（再改訂版）',
+    },
   };
 }

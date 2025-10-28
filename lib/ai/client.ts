@@ -26,6 +26,9 @@ export function getOpenAIClient(): OpenAI {
 export const openai = {
   get client() {
     return getOpenAIClient();
+  },
+  get beta() {
+    return getOpenAIClient().beta;
   }
 };
 

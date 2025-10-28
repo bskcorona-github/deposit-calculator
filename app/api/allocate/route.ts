@@ -47,35 +47,33 @@ export async function POST(request: NextRequest) {
         // 修正提案がある項目を自動的に反映
         const processedLines = new Set<number>(); // 既に処理した行を記録
         
-        for (const itemValidation of aiValidation.item_validations) {
+        for (const itemValidation of aiValidation.items) {
           if (itemValidation.suggested_correction) {
             const correction = itemValidation.suggested_correction;
             
             // 重大な問題（critical）と警告（warning）のみ自動修正
-            // suggestionは参考情報のみなので適用しない
-            if (correction.severity === 'critical' || correction.severity === 'warning') {
-              // 該当する項目を検索（項目名と元の借主負担額でマッチング）
-              // これにより同じ項目名でも金額が異なれば区別できる
+            // info/approvedは参考情報のみなので適用しない
+            if (itemValidation.severity === 'critical' || itemValidation.severity === 'warning') {
+              // 該当する項目を検索（項目名でマッチング）
               const lineIndex = result.lines.findIndex((line, idx) => {
-                const nameMatch = line.item === itemValidation.line_item;
-                const amountMatch = Math.abs(
-                  line.tenant_share - itemValidation.original_allocation.tenant_share
-                ) < 1; // 1円未満の誤差を許容
-                return nameMatch && amountMatch && !processedLines.has(idx);
+                const nameMatch = line.item === itemValidation.item;
+                return nameMatch && !processedLines.has(idx);
               });
               
               if (lineIndex !== -1) {
                 const line = result.lines[lineIndex];
                 
+                // correction.tenant_shareは割合（0-1）なので、金額に変換
+                const newTenantShare = Math.round(line.original_subtotal * correction.tenant_share);
+                const newLandlordShare = line.original_subtotal - newTenantShare;
+                
                 // 修正を適用
-                line.tenant_share = correction.tenant_share;
-                line.landlord_share = correction.landlord_share;
-                line.tenant_percentage = Math.round(
-                  (correction.tenant_share / line.original_subtotal) * 100
-                );
+                line.tenant_share = newTenantShare;
+                line.landlord_share = newLandlordShare;
+                line.tenant_percentage = Math.round(correction.tenant_share * 100);
                 
                 // 根拠にAI検証結果を追加（重複チェック）
-                const severityLabel = correction.severity === 'critical' 
+                const severityLabel = itemValidation.severity === 'critical' 
                   ? 'AI検証による自動修正（重大）' 
                   : 'AI検証による自動修正（警告）';
                 

@@ -123,3 +123,6 @@ rules:
 pricing_guidance:
   cleaning_flat_cap: 35000  # クリーニング一律負担の上限目安（円）
   key_change_cap: 20000     # 鍵交換費用の上限目安（円）
+  wallpaper_per_sqm_cap: 2500  # 壁紙単価上限（円/㎡）
+  flooring_per_sqm_cap: 3000   # 床材単価上限（円/㎡）
+  tatami_per_mat_cap: 8000     # 畳単価上限（円/畳）

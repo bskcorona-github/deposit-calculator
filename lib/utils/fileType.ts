@@ -1,20 +1,34 @@
+export type FileTypeInfo = {
+  type: 'pdf' | 'excel' | 'word' | 'csv' | 'unknown';
+  mimeType: string;
+  fileName: string;
+};
+
 /**
  * ファイルタイプを検出
  */
-export function detectFileType(file: File): string {
+export function detectFileType(file: File): FileTypeInfo {
   const ext = file.name.split('.').pop()?.toLowerCase();
-  if (ext === 'pdf') return 'pdf';
-  if (ext === 'xlsx' || ext === 'xls') return 'excel';
-  if (ext === 'docx' || ext === 'doc') return 'word';
-  if (ext === 'csv') return 'csv';
+  let detectedType: FileTypeInfo['type'] = 'unknown';
+  
+  if (ext === 'pdf') detectedType = 'pdf';
+  else if (ext === 'xlsx' || ext === 'xls') detectedType = 'excel';
+  else if (ext === 'docx' || ext === 'doc') detectedType = 'word';
+  else if (ext === 'csv') detectedType = 'csv';
   
   // MIMEタイプでもチェック
-  if (file.type === 'application/pdf') return 'pdf';
-  if (file.type.includes('spreadsheet') || file.type.includes('excel')) return 'excel';
-  if (file.type.includes('wordprocessing') || file.type.includes('msword')) return 'word';
-  if (file.type === 'text/csv') return 'csv';
+  if (detectedType === 'unknown') {
+    if (file.type === 'application/pdf') detectedType = 'pdf';
+    else if (file.type.includes('spreadsheet') || file.type.includes('excel')) detectedType = 'excel';
+    else if (file.type.includes('wordprocessing') || file.type.includes('msword')) detectedType = 'word';
+    else if (file.type === 'text/csv') detectedType = 'csv';
+  }
   
-  return 'unknown';
+  return {
+    type: detectedType,
+    mimeType: file.type,
+    fileName: file.name,
+  };
 }
 
 /**

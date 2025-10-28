@@ -44,7 +44,7 @@ export async function POST(request: NextRequest) {
     // ファイルタイプに応じて解析
     switch (fileTypeInfo.type) {
       case 'pdf':
-        result = await parseLeasePDF(buffer, useAI);
+        result = await parseLeasePDF(buffer);
         break;
         
       case 'word':

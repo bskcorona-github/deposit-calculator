@@ -45,7 +45,7 @@ export async function POST(request: NextRequest) {
     // ファイルタイプに応じて解析
     switch (fileTypeInfo.type) {
       case 'pdf':
-        result = await parseEstimatePDF(buffer, useAI);
+        result = await parseEstimatePDF(buffer);
         break;
         
       case 'excel':

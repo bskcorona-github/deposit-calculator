@@ -46,6 +46,68 @@ export interface AllocationBasis {
   label: string;
   detail?: string;
   clause_ref?: string; // 特約参照
+  guideline_ref?: string; // ガイドライン参照（ページ番号・図番号など）
+  law_ref?: string; // 法令参照（民法621条など）
+}
+
+/**
+ * 監査トレース - 計算根拠の詳細記録
+ */
+export interface AuditTrace {
+  extracted_item: {
+    description: string;
+    quantity: number;
+    unit: string;
+    unit_price: number;
+    subtotal: number;
+    notes: string;
+  };
+  classification: 'normal_wear' | 'aging' | 'tenant_fault' | 'special_clause' | 'excluded';
+  root_cause: string; // 根拠コード（例: GL-Section3-Fig3-Wallpaper6y, CIVIL-621）
+  unit_minimum?: {
+    type: string; // 例: wall_face, sqm, mat, set
+    value: number;
+  };
+  depreciation?: {
+    useful_life_years: number;
+    elapsed_years: number;
+    remaining_ratio: number;
+    rounding_rule: string;
+  };
+  building_age_adjustment?: {
+    building_age: number;
+    adjustment_factor: number; // 0.7-1.0
+    reason: string;
+  };
+  special_clause_override?: {
+    clause_ref: string;
+    validity: 'valid' | 'invalid' | 'partial';
+    reason: string;
+    price_reasonableness?: {
+      checked: boolean;
+      threshold?: number;
+      status: 'acceptable' | 'excessive' | 'warning';
+    };
+  };
+  mixed_damage?: {
+    aging_keywords: string[];
+    fault_keywords: string[];
+    allocation_ratio: number; // 0.3, 0.5, 0.7
+    explanation: string;
+  };
+  allocation: {
+    tenant_share: number;
+    landlord_share: number;
+    calculation_steps: string[]; // 計算ステップの説明
+    final_formula: string; // 最終的な計算式
+  };
+  warnings: string[];
+  references: {
+    guideline_page?: string; // 例: "P.15 図3"
+    guideline_qa?: string; // 例: "Q16"
+    law?: string; // 例: "民法621条"
+    case_law?: string; // 判例
+  };
 }
 
 export interface AllocatedLine {
@@ -62,6 +124,7 @@ export interface AllocatedLine {
   explanation: string; // 判定理由の説明
   notes: string; // 備考（不明時は空文字列）
   editable?: boolean;
+  audit_trace?: AuditTrace; // 監査トレース（詳細な計算根拠）
 }
 
 export interface AllocationResult {
@@ -73,6 +136,11 @@ export interface AllocationResult {
   };
   warnings: string[];
   ai_validation?: any; // AI検証結果（オプション）
+  meta?: {
+    rules_version: number; // ルールバージョン
+    calculation_date: string; // 計算日時
+    guideline_reference: string; // 参照したガイドライン版
+  };
 }
 
 export interface Rule {
@@ -101,6 +169,9 @@ export interface RulesConfig {
   pricing_guidance: {
     cleaning_flat_cap: number;
     key_change_cap: number;
+    wallpaper_per_sqm_cap: number;
+    flooring_per_sqm_cap: number;
+    tatami_per_mat_cap: number;
   };
 }
 
